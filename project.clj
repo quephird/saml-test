@@ -7,6 +7,8 @@
                  [compojure "1.5.2"]
                  [hiccup "1.0.5"]
                  [ring "1.5.1"]
-                 [saml20-clj "0.1.5"]
-                 ]
+                 [saml20-clj "0.1.6"]]
+  :plugins [[lein-git-deps "0.0.1-SNAPSHOT"]
+            [big-solutions/lein-mvn "0.1.0"]]
+  :git-dependencies [["https://github.com/OpenConext/Mujina.git"]]
   :main saml-test.core)

@@ -5,4 +5,4 @@
 (defn -main
   "The point of entry for the demo server."
   []
-  (jetty/run-jetty routes/app {:port 8080}))
+  (jetty/run-jetty routes/app {:port 8081}))
