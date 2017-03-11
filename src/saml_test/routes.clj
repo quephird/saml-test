@@ -1,6 +1,5 @@
 (ns saml-test.routes
   (:require [compojure.core :refer [defroutes routes GET POST]]
-            [compojure.handler :as handler]
             [hiccup.page :refer [html5]]
             [saml20-clj.routes :as saml-routes]
             [saml20-clj.sp :as saml-sp]
@@ -58,7 +57,7 @@
   "
   [{:keys [app-name base-uri idp-uri idp-cert keystore-file keystore-password key-alias]}]
   (let [decrypter (saml-sp/make-saml-decrypter keystore-file keystore-password key-alias)
-        cert (saml-shared/get-certificate-b64 keystore-file keystore-password key-alias)
+        sp-cert (saml-shared/get-certificate-b64 keystore-file keystore-password key-alias)
         mutables (assoc (saml-sp/generate-mutables)
                    :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias))
 
@@ -73,16 +72,16 @@
         state {:mutables mutables
                :saml-req-factory! saml-req-factory!
                :timeout-pruner-fn! prune-fn!
-               :certificate-x509 cert}]
+               :certificate-x509 sp-cert}]
     (routes
       (GET "/saml/meta" []
         {:status 200
          :headers {"Content-type" "text/xml"}
-         :body (saml-sp/metadata app-name acs-uri cert)})
+         :body (saml-sp/metadata app-name acs-uri sp-cert)})
       (GET "/saml" [:as req]
-        {:status 200
-         :headers {"Content-type" "text/xml"}
-         :body "BOOOOOOO!!!"})
+        (let [saml-request (saml-req-factory!)
+              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key mutables) "http://www.google.com")]
+          (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
       (POST "/saml" {params :params session :session}
         (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
               relay-state (:RelayState params)
@@ -90,7 +89,7 @@
               saml-resp (saml-sp/xml-string->saml-resp xml-response)
               valid-signature? (if idp-cert
                                  (saml-sp/validate-saml-response-signature saml-resp idp-cert)
-                                true)
+                                 true)
               valid? (and valid-relay-state? valid-signature?)
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
@@ -100,6 +99,3 @@
              :body ""}
             {:status 500
              :body "The SAML response from IdP does not validate!"}))))))
-
-(def app
-  (handler/api (routes main-routes saml-routes)))
