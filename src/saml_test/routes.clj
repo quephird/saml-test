@@ -80,7 +80,7 @@
          :body (saml-sp/metadata app-name acs-uri sp-cert)})
       (GET "/saml" [:as req]
         (let [saml-request (saml-req-factory!)
-              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key mutables) "http://www.google.com")]
+              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "http://www.google.com")]
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
       (POST "/saml" {params :params session :session}
         (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
@@ -89,7 +89,7 @@
               saml-resp (saml-sp/xml-string->saml-resp xml-response)
               valid-signature? (if idp-cert
                                  (saml-sp/validate-saml-response-signature saml-resp idp-cert)
-                                 true)
+                                 false)
               valid? (and valid-relay-state? valid-signature?)
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?

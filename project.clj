@@ -10,7 +10,8 @@
                  [org.slf4j/slf4j-log4j12 "1.7.22"]
                  [ring "1.5.1"]
                  [saml20-clj "0.1.6"]]
-  :plugins [[lein-git-deps "0.0.1-SNAPSHOT"]
-            [big-solutions/lein-mvn "0.1.0"]]
-  :git-dependencies [["https://github.com/OpenConext/Mujina.git"]]
+  :plugins [[big-solutions/lein-mvn "0.1.0"]
+            [lein-bower "0.5.2"]
+            [lein-npm "0.6.2"]]
+  :npm {:dependencies [[saml-idp "0.2.2"]]}
   :main saml-test.core)
