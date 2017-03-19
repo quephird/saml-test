@@ -2,17 +2,22 @@
 
 ## Why did I do this?
 
-Needed to investigate SSO integration into a new clojure app
-Needed to find a library, prefereabley a clojure one
-Hoped to hasve test IDP at ,my disposal bbut none was
-Wanted to a ffee pnline omne, couldn't find one either that worked
-Didn't want to install somehting as co,mplex as shibboleth
+At $DAYJOB, I was charged with investigating how to integrate Single Sign-On (SSO) into a potential new Clojure-based application.
+And so, I needed to find a library, preferably one in Clojure not Java since I have found Clojure libraries to be far simpler and easier to work with.
+I also hoped to have test Identity Provider (IDP) server at my disposal but our company had none already, and we weren't yet ready to partner with an actual provider.
+I searched for a free online service, but could not find one that either worked or for which I could successfully set up an account.
+(I tried [https://openidp.feide.no/](https://openidp.feide.no/) but just got nowhere.)
+And I _really_ didn't want to have to install and configure something as complex as Shibboleth.
 
 ## Goals
 
-Self-contained project not requiring any exterma; dependeeies or comnfiguration
-Demonstrate round trip from SP to IDP back to SP
-implement authorixatiomn scheme
+Ideally, I wanted a completely self-contained project which fulfilled the following:
+
+* Exposes a minimally functional Service Provider (SP) endpoint
+* Uses a Clojure library that "spoke" SAML
+* Does not require any external installation and configuration of an IDP
+* Demonstrates a round trip conversation from SP to IDP and back to SP
+* Implements a minimal authorization scheme
 
 ## Explanation of SSO using SAML
 
