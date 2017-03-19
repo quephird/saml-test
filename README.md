@@ -21,13 +21,37 @@ Ideally, I wanted a completely self-contained project which fulfilled the follow
 
 ## Explanation of SSO using SAML
 
-TODO: Use JavE for diagram.
+Below is a diagram illustrating the conversation between all three parties.
 
-               IDP
+```
+                                                    +-------+
+             --------------------4------------------|  IDP  |
+            |  ------------------3----------------->+-------+
+            | |
+            | |
+            | |
+            | |
+            v |
+         +-------+
+        -|  User |
+       | +-------+
+       |    ^ |
+       |    | |
+       |    | |
+       |    | |
+       |    | |
+       |    | -------------------1----------------->+-------+
+       |     --------------------2------------------|  SP   |
+       |                                            +-------+
+        ----------------------5-------------------------^
 
-    User
+```
 
-               SP
+`1` represents the first request made by the user to enter into the SP.  
+The SP responds by sending a 302 back with the IDP URL to the user in `2`.  
+The user's browser then makes its first request to the IDP with the return URL for the SP in `3`.  
+Upon successful authentication into the IDP, it sends another 302 to the user in `4`.  
+Finally, the user returns to the SP with a SAML payload from the IDP in `5`.  
 
 ## Getting things running
 
@@ -99,6 +123,9 @@ In another session, start the SP:
 TODO: Flesh this out
 
 ## Important links
+
+Wikipedia article on SAML
+[]()
 
 `lein-npm`  
 [https://github.com/RyanMcG/lein-npm](https://github.com/RyanMcG/lein-npm)
