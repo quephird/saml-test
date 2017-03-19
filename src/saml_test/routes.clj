@@ -12,9 +12,9 @@
      [:link {:rel "stylesheet" :href "//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"}]
      [:title "Welcome to the demo SP"]]
     [:body.container
-     [:h1 "Demo Service Provider"]
-     [:p.lead "You can get the SAML metadata " [:a {:href "/saml/meta"} "here"]]
-     [:a.btn.btn-primary {:href "login"} "Login to IdP"]]]))
+     [:h1 "Hey, you've found your local Service Provider!!!"]
+     [:p.lead "You can get the SAML metadata for this SP " [:a {:href "/saml/meta"} "here"] "!!!"]
+     [:a.btn.btn-primary {:href "login"} "Take me to the IDP!!!"]]]))
 
 (defroutes main-routes
   (GET "/" []

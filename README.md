@@ -21,7 +21,7 @@ Ideally, I wanted a completely self-contained project which fulfilled the follow
 
 ## Explanation of SSO using SAML
 
-Below is a diagram illustrating the conversation between all three parties.
+Below is a diagram illustrating the conversation between all three parties in this demo project.
 
 ```
                                                     +-------+
@@ -120,12 +120,24 @@ In another session, start the SP:
 
 #### Test SSO
 
-TODO: Flesh this out
+Now in your browser go to [http://localhost:8081](http://localhost:8081); you should see something like this:
+
+![SP front door](images/SP_front_door.png)
+
+Click the button and you should be taken to the IDP with a screen resembling this:
+
+![IDP_login](images/IDP_login.png)
+
+This is a mock IDP so there isn't actually any authentication implementation but that's ok; 
+all we really want to demonstrate is that we can have the IDP send a valid SAML response back to the SP.
 
 ## Important links
 
-Wikipedia article on SAML
-[]()
+Wikipedia article on SAML  
+[https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language](https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language)
+
+`saml20-clj`  
+[https://github.com/vlacs/saml20-clj](https://github.com/vlacs/saml20-clj)
 
 `lein-npm`  
 [https://github.com/RyanMcG/lein-npm](https://github.com/RyanMcG/lein-npm)
