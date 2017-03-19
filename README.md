@@ -131,6 +131,8 @@ Click the button and you should be taken to the IDP with a screen resembling thi
 This is a mock IDP so there isn't actually any authentication implementation but that's ok; 
 all we really want to demonstrate is that we can have the IDP send a valid SAML response back to the SP.
 
+####TODO: Finish discussion and add screen caps
+
 ## Important links
 
 Wikipedia article on SAML  
