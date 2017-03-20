@@ -53,25 +53,25 @@ Below is a diagram illustrating the conversation between all three parties that 
 The five parts of this conversation are the following:
 
 1. The user sends the first request to the SP endpoint.  
-1. The SP responds by sending a 302 back with the IDP URL to the user.  
+1. The SP responds by sending a HTTP 302 status code back with the IDP URL to the user.  
 1. The user's browser then makes its first request to the IDP with the return URL for the SP.  
 1. Upon successful authentication into the IDP, it sends another 302 to the user.  
 1. Finally, the user returns to the SP with a SAML payload from the IDP.  
 
 As I said above, `saml20-clj` does have a little demo SP but weirdly the Compojure routes are partially defined in the library itself.
-(That was actually the first thing that motivated me to create my own project to take the library for a test drive.)
+(That was actually the first thing that motivated me to create my own project.)
 Likewise, I implemented the routes using Compojure, not using any of the ones in the library.
 
-The next thing I needed to do was find an IDP that I could somehow spin up from within this project.
+The next thing I needed to do was search for an IDP that I could somehow spin up from within this project.
 I was inspired by the `lein-postgres` plugin which allows a full-fledged Postgres instance to be available without any separate installation process.
 I tried a couple of Java-based ones, including [Mujina](https://github.com/OpenConext/Mujina), hoping to exploit Maven to similarly start and stop the server,
-but I could figure out how to get it configured to work with my local SP.
+but I could not figure out how to get it configured to work with my local SP.
 (Specifically, I could not figure out how to get it to allow a `GET` from the user to authenticate into it,
 as well as not being able to successfully `PUT` the SP's metadata into it.)
 I had even lesser success with another Java implementation, [MockIDP](https://github.com/rasmusson/MockIDP). 
 I also tried a couple of free online IDP's but I just had no luck with them, likewise not being able to upload SP metadata.
 
-
+#### TODO: Talk about choosing `saml-idp`
 
 ## Getting things running
 
