@@ -4,24 +4,27 @@
 
 At $DAYJOB, I was charged with investigating how to integrate Single Sign-On (SSO) into a potential new Clojure-based application.
 And so, I needed to find a library, preferably one in Clojure not Java since I have found Clojure libraries to be far simpler and easier to work with.
-I also hoped to have test Identity Provider (IDP) server at my disposal but our company had none already, and we weren't yet ready to partner with an actual provider.
+I also hoped to have a test Identity Provider (IDP) server at my disposal but our company had none already, and we weren't yet ready to partner with a third-party provider.
 I searched for a free online service, but could not find one that either worked or for which I could successfully set up an account.
 (I tried [https://openidp.feide.no/](https://openidp.feide.no/) but just got nowhere.)
-And I _really_ didn't want to have to install and configure something as complex as Shibboleth.
+And I _really_ didn't want to have to install and configure something as complex as Shibboleth just for a proof-of-concept.
 
 ## Goals
 
 Ideally, I wanted a completely self-contained project which fulfilled the following:
 
 * Exposes a minimally functional Service Provider (SP) endpoint
-* Uses a Clojure library that "spoke" SAML
+* Uses a Clojure library that "speaks" SAML
 * Does not require any external installation and configuration of an IDP
 * Demonstrates a round trip conversation from SP to IDP and back to SP
 * Implements a minimal authorization scheme
 
-## Explanation of SSO using SAML
+## Discussion
 
-Below is a diagram illustrating the conversation between all three parties in this demo project.
+After a decent amount of googling, I found what seemed to be the best Clojure library for handling SSO and SAML, `saml20-clj`.
+It has a complete implementation for doing this, has a fairly easy-to-use API, and it comes with a demo SP implementation, although not fully flushed out.
+
+Below is a diagram illustrating the conversation between all three parties that I wanted to have take place in this demo project.
 
 ```
                                                     +-------+
@@ -47,11 +50,28 @@ Below is a diagram illustrating the conversation between all three parties in th
 
 ```
 
-`1` represents the first request made by the user to enter into the SP.  
-The SP responds by sending a 302 back with the IDP URL to the user in `2`.  
-The user's browser then makes its first request to the IDP with the return URL for the SP in `3`.  
-Upon successful authentication into the IDP, it sends another 302 to the user in `4`.  
-Finally, the user returns to the SP with a SAML payload from the IDP in `5`.  
+The five parts of this conversation are the following:
+
+1. The user sends the first request to the SP endpoint.  
+1. The SP responds by sending a 302 back with the IDP URL to the user.  
+1. The user's browser then makes its first request to the IDP with the return URL for the SP.  
+1. Upon successful authentication into the IDP, it sends another 302 to the user.  
+1. Finally, the user returns to the SP with a SAML payload from the IDP.  
+
+As I said above, `saml20-clj` does have a little demo SP but weirdly the Compojure routes are partially defined in the library itself.
+(That was actually the first thing that motivated me to create my own project to take the library for a test drive.)
+Likewise, I implemented the routes using Compojure, not using any of the ones in the library.
+
+The next thing I needed to do was find an IDP that I could somehow spin up from within this project.
+I was inspired by the `lein-postgres` plugin which allows a full-fledged Postgres instance to be available without any separate installation process.
+I tried a couple of Java-based ones, including [Mujina](https://github.com/OpenConext/Mujina), hoping to exploit Maven to similarly start and stop the server,
+but I could figure out how to get it configured to work with my local SP.
+(Specifically, I could not figure out how to get it to allow a `GET` from the user to authenticate into it,
+as well as not being able to successfully `PUT` the SP's metadata into it.)
+I had even lesser success with another Java implementation, [MockIDP](https://github.com/rasmusson/MockIDP). 
+I also tried a couple of free online IDP's but I just had no luck with them, likewise not being able to upload SP metadata.
+
+
 
 ## Getting things running
 
@@ -131,7 +151,9 @@ Click the button and you should be taken to the IDP with a screen resembling thi
 This is a mock IDP so there isn't actually any authentication implementation but that's ok; 
 all we really want to demonstrate is that we can have the IDP send a valid SAML response back to the SP.
 
-####TODO: Finish discussion and add screen caps
+#### TODO: Finish discussion and add screen caps
+
+#### TODO: Talk about future goals
 
 ## Important links
 
