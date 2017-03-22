@@ -6,7 +6,6 @@ At $DAYJOB, I was charged with investigating how to integrate Single Sign-On (SS
 And so, I needed to find a library, preferably one in Clojure not Java since I have found Clojure libraries to be far simpler and easier to work with.
 I also hoped to have a test Identity Provider (IDP) server at my disposal but our company had none already, and we weren't yet ready to partner with a third-party provider.
 I searched for a free online service, but could not find one that either worked or for which I could successfully set up an account.
-(I tried [https://openidp.feide.no/](https://openidp.feide.no/) but just got nowhere.)
 And I _really_ didn't want to have to install and configure something as complex as Shibboleth just for a proof-of-concept.
 
 ## Goals
@@ -69,9 +68,16 @@ but I could not figure out how to get it configured to work with my local SP.
 (Specifically, I could not figure out how to get it to allow a `GET` from the user to authenticate into it,
 as well as not being able to successfully `PUT` the SP's metadata into it.)
 I had even lesser success with another Java implementation, [MockIDP](https://github.com/rasmusson/MockIDP). 
-I also tried a couple of free online IDP's but I just had no luck with them, likewise not being able to upload SP metadata.
+I also tried a couple of free online IDP's but I just had no luck with them, 
+among them [https://openidp.feide.no/](https://openidp.feide.no/) and [https://zxidp.org/index-idp.html](https://zxidp.org/index-idp.html), likewise not being able to upload SP metadata.
 
-#### TODO: Talk about choosing `saml-idp`
+I finally capitulated and searched for a minimal mock IDP which I could install locally.
+I came across `saml-idp`, a node.js implementation, and found it trivial to get configured and working.
+But then I wondered if someone had ever made a Leiningen plugin to invoke `npm`;
+I had completely forgotten that of course one exists for ClojureScript!
+And there's also a plugin for `bower`. 
+So I decided to use them not for building a ClojureScript application but just for downloading and installing dependencies.
+It's a bit perverse... but it works!
 
 ## Getting things running
 
@@ -148,7 +154,7 @@ Click the button and you should be taken to the IDP with a screen resembling thi
 
 ![IDP_login](images/IDP_login.png)
 
-This is a mock IDP so there isn't actually any authentication implementation but that's ok; 
+There is no authentication mechanism implemented in `saml-idp` but that's ok; 
 all we really want to demonstrate is that we can have the IDP send a valid SAML response back to the SP.
 
 #### TODO: Finish discussion and add screen caps
