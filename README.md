@@ -79,6 +79,8 @@ And there's also a plugin for `bower`.
 So I decided to use them not for building a ClojureScript application but just for downloading and installing dependencies.
 It's a bit perverse... but it works!
 
+#### TODO: Say something about normally needing to upload SP metadata to IDP
+
 ## Getting things running
 
 #### Clone this repo

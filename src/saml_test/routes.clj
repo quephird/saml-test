@@ -1,28 +1,17 @@
 (ns saml-test.routes
   (:require [compojure.core :refer [defroutes routes GET POST]]
-            [hiccup.page :refer [html5]]
             [saml20-clj.routes :as saml-routes]
             [saml20-clj.sp :as saml-sp]
-            [saml20-clj.shared :as saml-shared]))
-
-(defn front-door []
-  (html5
-   [:html
-    [:head
-     [:link {:rel "stylesheet" :href "//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"}]
-     [:title "Welcome to the demo SP"]]
-    [:body.container
-     [:h1 "Hey, you've found your local Service Provider!!!"]
-     [:p.lead "You can get the SAML metadata for this SP " [:a {:href "/saml/meta"} "here"] "!!!"]
-     [:a.btn.btn-primary {:href "login"} "Take me to the IDP!!!"]]]))
+            [saml20-clj.shared :as saml-shared]
+            [saml-test.pages :as pages]))
 
 (defroutes main-routes
   (GET "/" []
        {:status  200
-        :body    (front-door)})
+        :body    (pages/front-door)})
   (GET "/login" []
        {:status  302
-        :headers {"Location" "/saml?continue-url=idp_url"}
+        :headers {"Location" "/saml"}
         :body    ""}))
 
 (defn saml-routes
@@ -83,19 +72,23 @@
               hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "http://www.google.com")]
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
       (POST "/saml" {params :params session :session}
-        (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
+        (let [xml-string (saml-shared/base64->inflate->str (:SAMLResponse params))
               relay-state (:RelayState params)
               [valid-relay-state? continue-url] (saml-routes/valid-hmac-relay-state? (:secret-key-spec mutables) relay-state)
-              saml-resp (saml-sp/xml-string->saml-resp xml-response)
+              saml-resp (saml-sp/xml-string->saml-resp xml-string)
               valid-signature? (if idp-cert
                                  (saml-sp/validate-saml-response-signature saml-resp idp-cert)
                                  false)
               valid? (and valid-relay-state? valid-signature?)
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
-            {:status  303 ;; See other
-             :headers {"Location" continue-url}
+            {:status  200
+             :headers {"Content-Type" "text/html"}
              :session (assoc session :saml saml-info)
-             :body ""}
+             :body (pages/show-saml-info saml-info)}
+            ;{:status  303
+            ; :headers {"Location" continue-url}
+            ; :session (assoc session :saml saml-info)
+            ; :body ""}
             {:status 500
              :body "The SAML response from IdP does not validate!"}))))))
