@@ -1,5 +1,6 @@
 (ns saml-test.routes
-  (:require [compojure.core :refer [defroutes routes GET POST]]
+  (:require [taoensso.timbre :as timbre :refer [log info trace debug warn error]]
+            [compojure.core :refer [defroutes routes GET POST]]
             [saml20-clj.routes :as saml-routes]
             [saml20-clj.sp :as saml-sp]
             [saml20-clj.shared :as saml-shared]
@@ -47,9 +48,9 @@
   [{:keys [app-name base-uri idp-uri idp-cert keystore-file keystore-password key-alias]}]
   (let [decrypter (saml-sp/make-saml-decrypter keystore-file keystore-password key-alias)
         sp-cert (saml-shared/get-certificate-b64 keystore-file keystore-password key-alias)
+        ;; It's important to set the digest algorithm to SHA-256 (SHA-2). SHA-1 has been deprecated in browsers and will not work.
         mutables (assoc (saml-sp/generate-mutables)
-                   :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias))
-
+                   :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias :algorithm :sha256))
         acs-uri (str base-uri "/saml")
         saml-req-factory! (saml-sp/create-request-factory mutables
                                                           idp-uri
@@ -69,17 +70,22 @@
          :body (saml-sp/metadata app-name acs-uri sp-cert)})
       (GET "/saml" [:as req]
         (let [saml-request (saml-req-factory!)
-              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "http://www.google.com")]
+              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "no-op")]
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
       (POST "/saml" {params :params session :session}
         (let [xml-string (saml-shared/base64->inflate->str (:SAMLResponse params))
               relay-state (:RelayState params)
+              ;; Logging here some parameters for debugging
+              _ (debug (format "relay-state: %s" relay-state))
               [valid-relay-state? continue-url] (saml-routes/valid-hmac-relay-state? (:secret-key-spec mutables) relay-state)
               saml-resp (saml-sp/xml-string->saml-resp xml-string)
+              _ (debug (format "saml-resp: %s" saml-resp))
+              _ (info "Validating signature...")
               valid-signature? (if idp-cert
-                                 (saml-sp/validate-saml-response-signature saml-resp idp-cert)
+                                 (saml-sp/validate-saml-response-signature saml-resp idp-cert) ; Seems to hang here for now..
                                  false)
               valid? (and valid-relay-state? valid-signature?)
+              _ (info (format "signature is valid? - %s" valid?))
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
             {:status  200

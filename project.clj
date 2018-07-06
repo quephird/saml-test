@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [compojure "1.6.1"]
                  [hiccup "1.0.5"]
+                 [com.taoensso/timbre "4.10.0"]
                  [org.slf4j/slf4j-api "1.7.25"]
                  [org.slf4j/slf4j-log4j12 "1.7.25"]
                  [ring "1.6.3"]
