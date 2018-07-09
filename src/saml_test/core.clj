@@ -6,7 +6,7 @@
             [saml-test.routes :as routes]
             [taoensso.timbre :as timbre :refer [log info trace debug warn error]]))
 
-(defn parse-certificate
+(defn- parse-certificate
   "Strip the ---BEGIN CERTIFICATE--- and ---END CERTIFICATE--- headers and newlines
   from certificate."
   [certstring]

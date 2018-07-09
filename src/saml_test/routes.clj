@@ -13,7 +13,10 @@
   (GET "/login" []
        {:status  302
         :headers {"Location" "/saml"}
-        :body    ""}))
+        :body    ""})
+  (GET "/target" []
+       {:status  200
+        :body    (pages/target)}))
 
 (defn saml-routes
   "The SP routes. They can be combined with application specific routes. Also it is assumed that
@@ -70,7 +73,7 @@
          :body (saml-sp/metadata app-name acs-uri sp-cert)})
       (GET "/saml" [:as req]
         (let [saml-request (saml-req-factory!)
-              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "no-op")]
+              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "target")]
           ; (debug (":secret-key-spec: %s" (:secret-key-spec mutables)))
           (info (str "GET /saml hmac-relay-state: " hmac-relay-state))
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
@@ -78,19 +81,16 @@
         (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
               relay-state (:RelayState params)
               [valid-relay-state? continue-url] (saml-routes/valid-hmac-relay-state? (:secret-key-spec mutables) relay-state)
-              _ (info (str "Valid-relay-state? - " valid-relay-state?))
-              _ (spit "resp.edn" (pr-str params))
-              _ (spit "resp.xml" (pr-str xml-response))
               saml-resp (saml-sp/xml-string->saml-resp xml-response)
               valid-signature? (if idp-cert
                                  (saml-sp/validate-saml-response-signature saml-resp idp-cert)
                                  false)
-              _ (info (str "Valid response? " valid-signature?))
+              _ (info (if valid-signature? "Signature was valid!" "Signature validation failed."))
               valid? (and valid-relay-state? valid-signature?)
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
             (do
-              (println "It was valid, redirecting...")
+              (info "Validation was successful, redirecting client...")
              {:status  303 ;; See other
               :headers {"Location" continue-url}
               :session (assoc session :saml saml-info)

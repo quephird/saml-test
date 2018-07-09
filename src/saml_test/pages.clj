@@ -44,4 +44,12 @@
   "TODO")
 
 (defn target []
-  "TODO")
+  (html5
+    [:html
+     [:head
+      [:link {:rel "stylesheet" :href "//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"}]
+      [:title "Congrats, your round-trip to the IDP was successful!"]]
+     [:body.container
+      [:h1 "Everything seems to have worked!"]
+      [:p.lead "You the SAML response from the IDP was valid and your SP->IDP->SP -roundtrip was successful."]
+      [:a.btn.btn-primary {:href "/"} "Return to main page"]]]))
