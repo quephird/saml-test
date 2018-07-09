@@ -71,30 +71,29 @@
       (GET "/saml" [:as req]
         (let [saml-request (saml-req-factory!)
               hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "no-op")]
+          ; (debug (":secret-key-spec: %s" (:secret-key-spec mutables)))
+          (info (str "GET /saml hmac-relay-state: " hmac-relay-state))
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
       (POST "/saml" {params :params session :session}
-        (let [xml-string (saml-shared/base64->inflate->str (:SAMLResponse params))
+        (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
               relay-state (:RelayState params)
-              ;; Logging here some parameters for debugging
-              _ (debug (format "relay-state: %s" relay-state))
               [valid-relay-state? continue-url] (saml-routes/valid-hmac-relay-state? (:secret-key-spec mutables) relay-state)
-              saml-resp (saml-sp/xml-string->saml-resp xml-string)
-              _ (debug (format "saml-resp: %s" saml-resp))
-              _ (info "Validating signature...")
+              _ (info (str "Valid-relay-state? - " valid-relay-state?))
+              _ (spit "resp.edn" (pr-str params))
+              _ (spit "resp.xml" (pr-str xml-response))
+              saml-resp (saml-sp/xml-string->saml-resp xml-response)
               valid-signature? (if idp-cert
-                                 (saml-sp/validate-saml-response-signature saml-resp idp-cert) ; Seems to hang here for now..
+                                 (saml-sp/validate-saml-response-signature saml-resp idp-cert)
                                  false)
+              _ (info (str "Valid response? " valid-signature?))
               valid? (and valid-relay-state? valid-signature?)
-              _ (info (format "signature is valid? - %s" valid?))
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
-            {:status  200
-             :headers {"Content-Type" "text/html"}
-             :session (assoc session :saml saml-info)
-             :body (pages/show-saml-info saml-info)}
-            ;{:status  303
-            ; :headers {"Location" continue-url}
-            ; :session (assoc session :saml saml-info)
-            ; :body ""}
-            {:status 500
-             :body "The SAML response from IdP does not validate!"}))))))
+            (do
+              (println "It was valid, redirecting...")
+             {:status  303 ;; See other
+              :headers {"Location" continue-url}
+              :session (assoc session :saml saml-info)
+              :body "Oh yeah, it worked!"})
+           {:status 500
+            :body "The SAML response from IdP does not validate!"}))))))

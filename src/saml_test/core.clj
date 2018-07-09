@@ -1,16 +1,22 @@
 (ns saml-test.core
-  (:require [compojure.core :as core]
+  (:require [clojure.string :as s]
+            [compojure.core :as core]
             [compojure.handler :as handler]
             [ring.adapter.jetty :as jetty]
-            [saml-test.routes :as routes]))
+            [saml-test.routes :as routes]
+            [taoensso.timbre :as timbre :refer [log info trace debug warn error]]))
 
-(def certti (slurp "./node_modules/saml-idp/idp-public-cert.pem"))
+(defn parse-certificate
+  "Strip the ---BEGIN CERTIFICATE--- and ---END CERTIFICATE--- headers and newlines
+  from certificate."
+  [certstring]
+  (->> (s/split certstring #"\n") rest drop-last s/join))
 
 (def config
   {:app-name "Test SAML app"
    :base-uri "http://localhost:8081"
    :idp-uri "http://localhost:7000"
-   :idp-cert certti
+   :idp-cert (parse-certificate (slurp "./node_modules/saml-idp/idp-public-cert.pem"))
    :keystore-file "keystore.jks"
    :keystore-password "changeit"
    :key-alias "mylocalsp"})
@@ -24,5 +30,5 @@
   "The point of entry for the demo server."
   []
   (do
-    (println "Jetty server running on port 8081")
+    (info "Started Jetty server on port 8081...")
     (jetty/run-jetty app {:port 8081})))

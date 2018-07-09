@@ -10,7 +10,7 @@
                  [org.slf4j/slf4j-api "1.7.25"]
                  [org.slf4j/slf4j-log4j12 "1.7.25"]
                  [ring "1.6.3"]
-                 [kirasystems/saml20-clj "0.1.12"]]
+                 [kirasystems/saml20-clj "0.1.12"]] ;; As of now this fork supports SHA-256 encryption while the main branch doesn't.
   :plugins [[big-solutions/lein-mvn "0.1.0"]
             [lein-bower "0.5.2"]
             [lein-npm "0.6.2"]]
