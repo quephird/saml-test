@@ -91,9 +91,11 @@
           (if valid?
             (do
               (info "Validation was successful, redirecting client...")
-             {:status  303 ;; See other
-              :headers {"Location" continue-url}
-              :session (assoc session :saml saml-info)
-              :body "Oh yeah, it worked!"})
-           {:status 500
-            :body "The SAML response from IdP does not validate!"}))))))
+              {:status 303
+               :headers {"Location" continue-url}
+               :session (assoc session :saml saml-info)
+               :body "Oh yeah, it worked!"})
+            (do
+              (error "The SAML response from IdP does not validate!")
+              {:status 500
+               :body "The SAML response from IdP does not validate!"})))))))

@@ -18,7 +18,7 @@
    :idp-uri "http://localhost:7000"
    :idp-cert (parse-certificate (slurp "./node_modules/saml-idp/idp-public-cert.pem"))
    :keystore-file "keystore.jks"
-   :keystore-password "changeit"
+   :keystore-password (System/getenv "KEYSTORE_PASS")
    :key-alias "mylocalsp"})
 
 (def app
