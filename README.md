@@ -117,6 +117,10 @@ Import the IDP certificate into the new keystore:
         -file ./node_modules/saml-idp/idp-public-cert.pem \
         -alias mylocalidp
 
+Export the keystore password to an environment variable:
+
+    export KEYSTORE_PASS="changeit"
+
 Check to see that both certificates are in fact in the keystore:
 
     keytool -list -keystore keystore.jks
@@ -169,7 +173,7 @@ Wikipedia article on SAML
 [https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language](https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language)
 
 `saml20-clj`  
-[https://github.com/vlacs/saml20-clj](https://github.com/vlacs/saml20-clj)
+[https://github.com/kirasystems/saml20-clj](https://github.com/kirasystems/saml20-clj)
 
 `lein-npm`  
 [https://github.com/RyanMcG/lein-npm](https://github.com/RyanMcG/lein-npm)
