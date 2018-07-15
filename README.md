@@ -67,15 +67,15 @@ I tried a couple of Java-based ones, including [Mujina](https://github.com/OpenC
 but I could not figure out how to get it configured to work with my local SP.
 (Specifically, I could not figure out how to get it to allow a `GET` from the user to authenticate into it,
 as well as not being able to successfully `PUT` the SP's metadata into it.)
-I had even lesser success with another Java implementation, [MockIDP](https://github.com/rasmusson/MockIDP). 
-I also tried a couple of free online IDP's but I just had no luck with them, 
+I had even lesser success with another Java implementation, [MockIDP](https://github.com/rasmusson/MockIDP).
+I also tried a couple of free online IDP's but I just had no luck with them,
 among them [https://openidp.feide.no/](https://openidp.feide.no/) and [https://zxidp.org/index-idp.html](https://zxidp.org/index-idp.html), likewise not being able to upload SP metadata.
 
 I finally capitulated and searched for a minimal mock IDP which I could install locally.
 I came across `saml-idp`, a node.js implementation, and found it trivial to get configured and working.
 But then I wondered if someone had ever made a Leiningen plugin to invoke `npm`;
 I had completely forgotten that of course one exists for ClojureScript!
-And there's also a plugin for `bower`. 
+And there's also a plugin for `bower`.
 So I decided to use them not for building a ClojureScript application but just for downloading and installing dependencies.
 It's a bit perverse... but it works!
 
@@ -103,6 +103,8 @@ Create a new keystore, and generate a new certificate for the SP in it:
 
     keytool -keystore keystore.jks -genkey -alias mylocalsp
 
+**ACHTUNG!** Make sure to remember the password you chose above because you will need to set an environment variable below so that the SP can access the keystore!!!
+
 Create a new certificate for the IDP:
 
     openssl req -x509 -new -newkey rsa:2048 -nodes \
@@ -125,9 +127,9 @@ You should see something like this:
 
     Keystore type: JKS
     Keystore provider: SUN
-    
+
     Your keystore contains 2 entries
-    
+
     mylocalsp, Mar 10, 2017, PrivateKeyEntry,
     Certificate fingerprint (SHA1): 01:EE:4C:D0:46:F2:1D:31:08:EF:ED:1C:E2:CF:E7:AD:73:4F:6E:EB
     mylocalidp, Mar 14, 2017, trustedCertEntry,
@@ -142,7 +144,14 @@ In one session, start the IDP:
         --acs http://localhost:8081/saml \
         --aud http://localhost:8081/saml
 
-In another session, start the SP:
+In _another_ session, export the keystore password to an environment variable:
+
+    export KEYSTORE_PASS=<<whatever_password_you_chose_above>>
+
+(In the fish shell, use `set -d KEYSTORE_PASS <<whatever_password_you_chose_above>>` instead.)
+Make sure to do that in this session, otherwise the SP won't be able to start because it won't be able to open the keystore!!!
+
+Then start the SP:
 
     lein run
 
@@ -156,7 +165,7 @@ Click the button and you should be taken to the IDP with a screen resembling thi
 
 ![IDP_login](images/IDP_login.png)
 
-There is no authentication mechanism implemented in `saml-idp` but that's ok; 
+There is no authentication mechanism implemented in `saml-idp` but that's ok;
 all we really want to demonstrate is that we can have the IDP send a valid SAML response back to the SP.
 
 #### TODO: Finish discussion and add screen caps
@@ -169,7 +178,7 @@ Wikipedia article on SAML
 [https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language](https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language)
 
 `saml20-clj`  
-[https://github.com/vlacs/saml20-clj](https://github.com/vlacs/saml20-clj)
+[https://github.com/kirasystems/saml20-clj](https://github.com/kirasystems/saml20-clj)
 
 `lein-npm`  
 [https://github.com/RyanMcG/lein-npm](https://github.com/RyanMcG/lein-npm)
@@ -181,7 +190,7 @@ Wikipedia article on SAML
 
 `saml-idp`  
 [https://github.com/mcguinness/saml-idp](https://github.com/mcguinness/saml-idp)
-  
+
 ## License
 
 Copyright (C) 2017, ⅅ₳ℕⅈⅇℒℒⅇ Ҝⅇℱℱoℜⅆ.
