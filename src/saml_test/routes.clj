@@ -1,5 +1,6 @@
 (ns saml-test.routes
-  (:require [compojure.core :refer [defroutes routes GET POST]]
+  (:require [taoensso.timbre :as timbre :refer [log info trace debug warn error]]
+            [compojure.core :refer [defroutes routes GET POST]]
             [saml20-clj.routes :as saml-routes]
             [saml20-clj.sp :as saml-sp]
             [saml20-clj.shared :as saml-shared]
@@ -12,7 +13,10 @@
   (GET "/login" []
        {:status  302
         :headers {"Location" "/saml"}
-        :body    ""}))
+        :body    ""})
+  (GET "/target" []
+       {:status  200
+        :body    (pages/target)}))
 
 (defn saml-routes
   "The SP routes. They can be combined with application specific routes. Also it is assumed that
@@ -47,9 +51,9 @@
   [{:keys [app-name base-uri idp-uri idp-cert keystore-file keystore-password key-alias]}]
   (let [decrypter (saml-sp/make-saml-decrypter keystore-file keystore-password key-alias)
         sp-cert (saml-shared/get-certificate-b64 keystore-file keystore-password key-alias)
+        ;; It's important to set the digest algorithm to SHA-256 (SHA-2). SHA-1 has been deprecated in browsers and will not work.
         mutables (assoc (saml-sp/generate-mutables)
-                   :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias))
-
+                   :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias :algorithm :sha256))
         acs-uri (str base-uri "/saml")
         saml-req-factory! (saml-sp/create-request-factory mutables
                                                           idp-uri
@@ -69,26 +73,29 @@
          :body (saml-sp/metadata app-name acs-uri sp-cert)})
       (GET "/saml" [:as req]
         (let [saml-request (saml-req-factory!)
-              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "http://www.google.com")]
+              hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "target")]
+          ; (debug (":secret-key-spec: %s" (:secret-key-spec mutables)))
+          (info (str "GET /saml hmac-relay-state: " hmac-relay-state))
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
       (POST "/saml" {params :params session :session}
-        (let [xml-string (saml-shared/base64->inflate->str (:SAMLResponse params))
+        (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
               relay-state (:RelayState params)
               [valid-relay-state? continue-url] (saml-routes/valid-hmac-relay-state? (:secret-key-spec mutables) relay-state)
-              saml-resp (saml-sp/xml-string->saml-resp xml-string)
+              saml-resp (saml-sp/xml-string->saml-resp xml-response)
               valid-signature? (if idp-cert
                                  (saml-sp/validate-saml-response-signature saml-resp idp-cert)
                                  false)
+              _ (info (if valid-signature? "Signature was valid!" "Signature validation failed."))
               valid? (and valid-relay-state? valid-signature?)
               saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
-            {:status  200
-             :headers {"Content-Type" "text/html"}
-             :session (assoc session :saml saml-info)
-             :body (pages/show-saml-info saml-info)}
-            ;{:status  303
-            ; :headers {"Location" continue-url}
-            ; :session (assoc session :saml saml-info)
-            ; :body ""}
-            {:status 500
-             :body "The SAML response from IdP does not validate!"}))))))
+            (do
+              (info "Validation was successful, redirecting client...")
+              {:status 303
+               :headers {"Location" continue-url}
+               :session (assoc session :saml saml-info)
+               :body "Oh yeah, it worked!"})
+            (do
+              (error "The SAML response from IdP does not validate!")
+              {:status 500
+               :body "The SAML response from IdP does not validate!"})))))))

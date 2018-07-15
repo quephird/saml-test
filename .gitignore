@@ -14,3 +14,6 @@ keystore.*
 .idea
 *.iml
 **/.DS_Store
+*.pem
+*.crs
+*.jks
