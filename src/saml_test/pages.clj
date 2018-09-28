@@ -21,7 +21,7 @@
         [:td k] [:td v]])
      ;; Actual name ID
      [:tr
-      [:td :name-id][:td  (:value (:name-id assertion))]]]))
+      [:td :name-id] [:td (:value (:name-id assertion))]]]))
 
 (defn show-saml-info [saml-info]
   (html5
@@ -36,9 +36,9 @@
        (for [[k v] saml-info]
          (if (not= k :assertions)
            [:tr
-            [:td k][:td v]]
+            [:td k] [:td v]]
            [:tr
-            [:td :assertions][:td (show-saml-assertions v)]]))]]]))
+            [:td :assertions] [:td (show-saml-assertions v)]]))]]]))
 
 (defn access-denied []
   "TODO")

@@ -13,18 +13,18 @@
   (->> (s/split certstring #"\n") rest drop-last s/join))
 
 (def config
-  {:app-name "Test SAML app"
-   :base-uri "http://localhost:8081"
-   :idp-uri "http://localhost:7000"
-   :idp-cert (parse-certificate (slurp "./node_modules/saml-idp/idp-public-cert.pem"))
-   :keystore-file "keystore.jks"
+  {:app-name          "Test SAML app"
+   :base-uri          "http://localhost:8081"
+   :idp-uri           "http://localhost:7000"
+   :idp-cert          (parse-certificate (slurp "./node_modules/saml-idp/idp-public-cert.pem"))
+   :keystore-file     "keystore.jks"
    :keystore-password (System/getenv "KEYSTORE_PASS")
-   :key-alias "mylocalsp"})
+   :key-alias         "mylocalsp"})
 
 (def app
   (handler/api
     (core/routes routes/main-routes
-            (routes/saml-routes config))))
+                 (routes/saml-routes config))))
 
 (defn -main
   "The point of entry for the demo server."

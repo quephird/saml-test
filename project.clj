@@ -2,7 +2,7 @@
   :description "A demonstration project for integrating a SSO IDP using SAML into a Clojure Web application"
   :url "http://github.com/quephird/saml-test"
   :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+            :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [compojure "1.6.1"]
                  [hiccup "1.0.5"]
