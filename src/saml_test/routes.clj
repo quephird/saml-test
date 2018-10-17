@@ -7,18 +7,16 @@
             [saml-test.pages :as pages]))
 
 (defroutes main-routes
-           (GET "/" []
-             {:status 200
-              :body   (pages/front-door)})
-
-           (GET "/login" []
-             {:status  302
-              :headers {"Location" "/saml"}
-              :body    ""})
-
-           (GET "/target" []
-             {:status 200
-              :body   (pages/target)}))
+  (GET "/" []
+       {:status  200
+        :body    (pages/front-door)})
+  (GET "/login" []
+       {:status  302
+        :headers {"Location" "/saml"}
+        :body    ""})
+  (GET "/target" []
+       {:status  200
+        :body    (pages/target)}))
 
 (defn saml-routes
   "The SP routes. They can be combined with application specific routes. Also it is assumed that
@@ -42,64 +40,62 @@
   The created routes are the following:
   - GET /saml/meta : This returns a SAML metadata XML file that has the needed information
                      for registering this SP. For example, it has the public key for this SP.
-  - GET /saml : it redirects to the IdP with the SAML request encoded in the URI per the
+  - GET /saml : it redirects to the IdP with the SAML request envcoded in the URI per the
                 HTTP-Redirect binding. This route accepts a 'continue' parameter that can
                 have the relative URI, where the browser should be redirected to after the
                 successful login in the IdP.
   - POST /saml : this is the endpoint for accepting the responses from the IdP. It then redirects
-                 the browser to the 'continue-url' that is found in the RelayState parameter, or the '/' root
+                 the browser to the 'continue-url' that is found in the RelayState paramete, or the '/' root
                  of the app.
   "
   [{:keys [app-name base-uri idp-uri idp-cert keystore-file keystore-password key-alias]}]
-  (let [decrypter         (saml-sp/make-saml-decrypter keystore-file keystore-password key-alias)
-        sp-cert           (saml-shared/get-certificate-b64 keystore-file keystore-password key-alias)
+  (let [decrypter (saml-sp/make-saml-decrypter keystore-file keystore-password key-alias)
+        sp-cert (saml-shared/get-certificate-b64 keystore-file keystore-password key-alias)
         ;; It's important to set the digest algorithm to SHA-256 (SHA-2). SHA-1 has been deprecated in browsers and will not work.
-        mutables          (assoc (saml-sp/generate-mutables)
-                            :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias :algorithm :sha256))
-        acs-uri           (str base-uri "/saml")
+        mutables (assoc (saml-sp/generate-mutables)
+                   :xml-signer (saml-sp/make-saml-signer keystore-file keystore-password key-alias :algorithm :sha256))
+        acs-uri (str base-uri "/saml")
         saml-req-factory! (saml-sp/create-request-factory mutables
                                                           idp-uri
                                                           saml-routes/saml-format
                                                           app-name
                                                           acs-uri)
-        prune-fn!         (partial saml-sp/prune-timed-out-ids!
-                                   (:saml-id-timeouts mutables))
-        state             {:mutables           mutables
-                           :saml-req-factory!  saml-req-factory!
-                           :timeout-pruner-fn! prune-fn!
-                           :certificate-x509   sp-cert}]
+        prune-fn! (partial saml-sp/prune-timed-out-ids!
+                           (:saml-id-timeouts mutables))
+        state {:mutables mutables
+               :saml-req-factory! saml-req-factory!
+               :timeout-pruner-fn! prune-fn!
+               :certificate-x509 sp-cert}]
     (routes
       (GET "/saml/meta" []
-        {:status  200
+        {:status 200
          :headers {"Content-type" "text/xml"}
-         :body    (saml-sp/metadata app-name acs-uri sp-cert)})
-
+         :body (saml-sp/metadata app-name acs-uri sp-cert)})
       (GET "/saml" [:as req]
-        (let [saml-request     (saml-req-factory!)
+        (let [saml-request (saml-req-factory!)
               hmac-relay-state (saml-routes/create-hmac-relay-state (:secret-key-spec mutables) "target")]
           ; (debug (":secret-key-spec: %s" (:secret-key-spec mutables)))
           (info (str "GET /saml hmac-relay-state: " hmac-relay-state))
           (saml-sp/get-idp-redirect idp-uri saml-request hmac-relay-state)))
-
       (POST "/saml" {params :params session :session}
-        (let [xml-response     (saml-shared/base64->inflate->str (:SAMLResponse params))
-              relay-state      (:RelayState params)
+        (let [xml-response (saml-shared/base64->inflate->str (:SAMLResponse params))
+              relay-state (:RelayState params)
               [valid-relay-state? continue-url] (saml-routes/valid-hmac-relay-state? (:secret-key-spec mutables) relay-state)
-              saml-resp        (saml-sp/xml-string->saml-resp xml-response)
+              saml-resp (saml-sp/xml-string->saml-resp xml-response)
               valid-signature? (if idp-cert
                                  (saml-sp/validate-saml-response-signature saml-resp idp-cert)
                                  false)
-              _                (info (if valid-signature? "Signature was valid!" "Signature validation failed."))
-              valid?           (and valid-relay-state? valid-signature?)
-              saml-info        (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
+              _ (info (if valid-signature? "Signature was valid!" "Signature validation failed."))
+              valid? (and valid-relay-state? valid-signature?)
+              saml-info (when valid? (saml-sp/saml-resp->assertions saml-resp decrypter))]
           (if valid?
             (do
               (info "Validation was successful, redirecting client...")
-              {:status  303
+              {:status 303
                :headers {"Location" continue-url}
                :session (assoc session :saml saml-info)
-               :body    "Oh yeah, it worked!"})
+               :body "Oh yeah, it worked!"})
             (do
               (error "The SAML response from IdP does not validate!")
               {:status 500
-               :body   "The SAML response from IdP does not validate!"})))))))
+               :body "The SAML response from IdP does not validate!"})))))))

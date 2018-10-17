@@ -96,9 +96,6 @@ Then download and build the IDP project; this can all be done through Leiningen:
 
     lein npm install  
     lein bower install
-    
-    cd node_modules/saml-idp
-    ../bower/bin/bower install
 
 #### Generate keystore
 
